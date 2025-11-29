@@ -315,7 +315,7 @@ const Dashboard = () => {
             const risk = Math.random() > 0.6 ? 'High' : (Math.random() > 0.3 ? 'Medium' : 'Low');
             // Colors: High=Red, Medium=Yellow, Low=Green
             const color = risk === 'High' ? '#DC2626' : (risk === 'Medium' ? '#EAB308' : '#16A34A');
-            const crop = CROPS[Math.floor(Math.random() * CROPS.length)].split(' (')[0];
+            //const crop = CROPS[Math.floor(Math.random() * CROPS.length)].split(' (')[0];
             
             // RECOMMENDATION LOGIC
             const recCrop = CROPS[(Math.floor(Math.random() * CROPS.length) + 1) % CROPS.length].split(' (')[0];
