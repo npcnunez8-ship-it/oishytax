@@ -4,7 +4,8 @@ import {
   TrendingUp, TrendingDown, Sprout, Package, FlaskConical, User, Award, 
   Medal, Trophy, Star, Lock, Zap, Users, Search, 
   UserPlus, Loader2, Camera, Upload, ScanLine, FileText, 
-  MessageCircle, Send, Bot, Wallet, Fan, AlertTriangle, Info, Bell, MapPin, CheckCircle
+  MessageCircle, Send, Bot, Wallet, Fan, AlertTriangle, Info, Bell, MapPin, CheckCircle,
+  Map // Added Map icon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
@@ -86,14 +87,14 @@ const callAiVision = async (file: File, lang: "bn" | "en") => {
 
 // --- DATA ---
 const DIVISION_DATA: any = {
-  Dhaka: { temp: 34, humidity: 82, rain: 60, forecast: [34, 33, 35, 32, 31, 33, 34] },
-  Chattogram: { temp: 32, humidity: 88, rain: 75, forecast: [32, 31, 31, 30, 29, 31, 32] },
-  Sylhet: { temp: 29, humidity: 90, rain: 90, forecast: [29, 28, 28, 27, 28, 29, 30] },
-  Rajshahi: { temp: 38, humidity: 45, rain: 10, forecast: [38, 39, 40, 39, 38, 37, 36] },
-  Khulna: { temp: 35, humidity: 70, rain: 40, forecast: [35, 35, 34, 33, 34, 35, 36] },
-  Barisal: { temp: 33, humidity: 85, rain: 50, forecast: [33, 33, 32, 32, 31, 33, 34] },
-  Rangpur: { temp: 36, humidity: 60, rain: 20, forecast: [36, 35, 34, 33, 32, 31, 30] },
-  Mymensingh: { temp: 31, humidity: 80, rain: 65, forecast: [31, 30, 29, 30, 31, 32, 33] },
+  Dhaka: { lat: 23.8103, lng: 90.4125, temp: 34, humidity: 82, rain: 60, forecast: [34, 33, 35, 32, 31, 33, 34] },
+  Chattogram: { lat: 22.3569, lng: 91.7832, temp: 32, humidity: 88, rain: 75, forecast: [32, 31, 31, 30, 29, 31, 32] },
+  Sylhet: { lat: 24.8949, lng: 91.8687, temp: 29, humidity: 90, rain: 90, forecast: [29, 28, 28, 27, 28, 29, 30] },
+  Rajshahi: { lat: 24.3636, lng: 88.6241, temp: 38, humidity: 45, rain: 10, forecast: [38, 39, 40, 39, 38, 37, 36] },
+  Khulna: { lat: 22.8456, lng: 89.5403, temp: 35, humidity: 70, rain: 40, forecast: [35, 35, 34, 33, 34, 35, 36] },
+  Barisal: { lat: 22.7010, lng: 90.3535, temp: 33, humidity: 85, rain: 50, forecast: [33, 33, 32, 32, 31, 33, 34] },
+  Rangpur: { lat: 25.7439, lng: 89.2752, temp: 36, humidity: 60, rain: 20, forecast: [36, 35, 34, 33, 32, 31, 30] },
+  Mymensingh: { lat: 24.7471, lng: 90.4203, temp: 31, humidity: 80, rain: 65, forecast: [31, 30, 29, 30, 31, 32, 33] },
 };
 const DIVISIONS = Object.keys(DIVISION_DATA);
 const CROPS = ["Rice (ধান)", "Potato (আলু)", "Tomato (টমেটো)", "Chili (মরিচ)", "Onion (পেঁয়াজ)", "Garlic (রসুন)"];
@@ -137,6 +138,10 @@ const TRANSLATIONS: any = {
     chat_typing: "এআই ভাবছে...",
     smart_alert_title: "স্মার্ট অ্যালার্ট (সতর্কবার্তা)",
     smart_alert_action: "করণীয় দেখুন",
+    // New Risk Map Translations
+    risk_map_title: "লোকাল রিস্ক ম্যাপ", risk_map_desc: "আপনার এলাকার ঝুঁকির চিত্র",
+    risk_high: "উচ্চ", risk_medium: "মাঝারি", risk_low: "কম",
+    risk_level: "ঝুঁকি", crop_type: "ফসল", last_update: "সর্বশেষ আপডেট"
   },
   en: {
     app_title: "KrishiBondhu 2.0", sub_title: "Krishoker Hasi", net_profit: "Net Profit", net_loss: "Net Loss",
@@ -158,6 +163,10 @@ const TRANSLATIONS: any = {
     chat_typing: "AI is thinking...",
     smart_alert_title: "Smart Alert",
     smart_alert_action: "See Action",
+    // New Risk Map Translations
+    risk_map_title: "Local Risk-Map", risk_map_desc: "Visualize community risks",
+    risk_high: "High", risk_medium: "Medium", risk_low: "Low",
+    risk_level: "Risk", crop_type: "Crop", last_update: "Last Update"
   }
 };
 
@@ -166,7 +175,8 @@ const Dashboard = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [username, setUsername] = useState<string>("Guest");
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const [view, setView] = useState<"dashboard" | "profile" | "community" | "scanner" | "chat">("dashboard");
+  // Added "risk_map" to view type
+  const [view, setView] = useState<"dashboard" | "profile" | "community" | "scanner" | "chat" | "risk_map">("dashboard");
   const [lang, setLang] = useState<"bn" | "en">(() => (localStorage.getItem("app_lang") as "bn" | "en") || "bn");
   const [showMenu, setShowMenu] = useState(false);
   
@@ -199,6 +209,11 @@ const Dashboard = () => {
   const [foundFriend, setFoundFriend] = useState<any>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
+
+  // Map State
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const [mapInitialized, setMapInitialized] = useState(false);
 
   const t = TRANSLATIONS[lang];
 
@@ -238,6 +253,67 @@ const Dashboard = () => {
     };
     init();
   }, [lang]);
+
+  // Map Initialization Effect
+  useEffect(() => {
+    if (view === "risk_map" && mapContainerRef.current && !mapInstanceRef.current && (window as any).L) {
+      const L = (window as any).L;
+      const center = DIVISION_DATA[selectedDivision] || DIVISION_DATA["Dhaka"];
+      const map = L.map(mapContainerRef.current).setView([center.lat, center.lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Custom Icons
+      const getIcon = (color: string) => L.divIcon({
+        className: 'custom-div-icon',
+        html: `<div class="w-4 h-4 rounded-full border-2 border-white shadow-md ${color}"></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+      });
+
+      // Farmer Marker (Blue)
+      L.marker([center.lat, center.lng], {
+        icon: getIcon('bg-blue-600')
+      }).addTo(map).bindPopup(`<div class="font-['Hind_Siliguri'] font-bold text-blue-700">আপনার অবস্থান</div>`);
+
+      // Mock Neighbors
+      for (let i = 0; i < 15; i++) {
+        const latOffset = (Math.random() - 0.5) * 0.06;
+        const lngOffset = (Math.random() - 0.5) * 0.06;
+        const risk = Math.random() > 0.6 ? 'High' : (Math.random() > 0.3 ? 'Medium' : 'Low');
+        const color = risk === 'High' ? 'bg-red-600' : (risk === 'Medium' ? 'bg-yellow-500' : 'bg-green-600');
+        const crop = CROPS[Math.floor(Math.random() * CROPS.length)].split(' (')[0]; // Get English name for simplicity in random gen
+        
+        // Localized Risk Label
+        const riskLabel = risk === 'High' ? t.risk_high : (risk === 'Medium' ? t.risk_medium : t.risk_low);
+        const timeAgo = toBanglaDigits(Math.floor(Math.random() * 59) + 1);
+
+        const popupContent = `
+          <div class="font-['Hind_Siliguri'] p-1 min-w-[150px]">
+            <p class="text-xs text-gray-500 font-bold mb-1">${t.crop_type}: <span class="text-gray-800">${crop}</span></p>
+            <p class="text-sm font-bold mb-1">${t.risk_level}: <span class="${risk === 'High' ? 'text-red-600' : (risk === 'Medium' ? 'text-yellow-600' : 'text-green-600')}">${riskLabel}</span></p>
+            <p class="text-[10px] text-gray-400 text-right">${t.last_update}: ${timeAgo} মিনিট আগে</p>
+          </div>
+        `;
+
+        L.marker([center.lat + latOffset, center.lng + lngOffset], {
+          icon: getIcon(color)
+        }).addTo(map).bindPopup(popupContent);
+      }
+
+      mapInstanceRef.current = map;
+      setMapInitialized(true);
+    }
+    
+    return () => {
+      if (view !== "risk_map" && mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+        setMapInitialized(false);
+      }
+    };
+  }, [view, selectedDivision, lang, t]);
 
   const currentWeather = realWeather || DIVISION_DATA[selectedDivision];
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
@@ -293,17 +369,10 @@ const Dashboard = () => {
 
   // --- SMART ALERT ENGINE ---
   const smartAlert = useMemo(() => {
-    // 1. DATA INPUTS
-    // We simulate the environmental conditions.
-    // In a real app, 'hasPotatoStorage' would come from database/transactions.
-    // For this demo, we assume the user has potatoes to trigger the specific requirement.
     const isRainy = currentWeather.rain > 50;
     const isHumid = currentWeather.humidity > 80;
     const isHot = currentWeather.temp > 35;
     
-    // 2. DECISION LOGIC
-    // Scenario: Critical (Potato + Rain + Humidity)
-    // Requirement: "Smart Alert" with specific text for Potato storage.
     if (isRainy && isHumid) {
       return {
         level: 'Critical',
@@ -317,7 +386,6 @@ const Dashboard = () => {
       };
     }
     
-    // Scenario: Warning (High Temp)
     if (isHot) {
       return {
         level: 'Warning',
@@ -331,7 +399,6 @@ const Dashboard = () => {
       };
     }
 
-    // Scenario: Good
     return {
       level: 'Good',
       title: lang === 'bn' ? 'স্মার্ট বার্তা' : 'Smart Update',
@@ -341,14 +408,6 @@ const Dashboard = () => {
       borderColor: "border-green-500"
     };
   }, [currentWeather, lang]);
-
-  // SIMULATE SMS IN CONSOLE
-  useEffect(() => {
-    if (smartAlert?.level === 'Critical') {
-      const timestamp = new Date().toLocaleTimeString();
-      console.log(`%c[SMS SENT at ${timestamp}]: ${smartAlert.message}`, "color: red; font-weight: bold; font-size: 14px; background: #ffebeb; padding: 4px; border: 1px solid red; border-radius: 4px;");
-    }
-  }, [smartAlert]);
 
   // --- VIEWS ---
   
@@ -372,6 +431,7 @@ const Dashboard = () => {
     return (<div className="min-h-screen bg-black font-['Hind_Siliguri'] pb-20 p-4 animate-in fade-in duration-300 flex flex-col items-center justify-center relative"><button onClick={() => setView("dashboard")} className="absolute top-4 left-4 z-50 bg-white/20 p-2 rounded-full text-white backdrop-blur-md"><ArrowLeft /></button><div className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl relative min-h-[60vh] flex flex-col"><div className="bg-[#2F5233] p-4 text-white text-center font-bold flex items-center justify-center gap-2"><ScanLine className="animate-pulse"/> {t.scanner_title}</div><div className="flex-1 bg-gray-100 flex items-center justify-center relative p-4">{scannedImage ? (<img src={scannedImage} alt="Crop" className="max-h-[400px] rounded-lg shadow-md object-cover" />) : (<div className="text-gray-400 flex flex-col items-center"><Camera size={64} className="mb-4 opacity-50"/><p>Select or Take a Photo</p></div>)}{scanning && (<div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center text-white z-20"><Loader2 size={48} className="animate-spin mb-4 text-[#E9D66B]"/><p className="font-bold text-lg animate-pulse">{t.analyzing}</p></div>)}</div><div className="p-6 bg-white border-t border-gray-100">{scanResult ? (<motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-left"><div className="flex justify-between items-center mb-4"><h3 className={`text-xl font-bold ${scanResult.color} flex items-center gap-2`}>{scanResult.status}</h3><span className="px-2 py-1 bg-gray-100 text-xs font-bold rounded-lg text-gray-500">{scanResult.confidence}</span></div><div className="bg-gray-50 p-4 rounded-xl border border-gray-200"><h4 className="font-bold text-gray-700 mb-2 flex items-center gap-2"><FileText size={16}/> {t.advice_title}</h4><ul className="text-sm text-gray-600 space-y-2">{scanResult.advice.map((tip: string, i: number) => (<li key={i}>{tip}</li>))}</ul></div><button onClick={() => {setScannedImage(null); setScanResult(null)}} className="mt-6 w-full bg-gray-900 text-white py-3 rounded-xl font-bold">Scan Again</button></motion.div>) : (<div className="flex gap-4"><label className="flex-1 bg-blue-50 text-blue-600 border border-blue-200 py-4 rounded-xl flex flex-col items-center justify-center gap-2 font-bold cursor-pointer active:scale-95 transition"><Upload size={24}/> {t.upload_photo}<input type="file" accept="image/*" className="hidden" onChange={(e) => {const file = e.target.files?.[0]; if(file) { const reader = new FileReader(); reader.onloadend = async () => { setScannedImage(reader.result as string); setScanning(true); setScanResult(null); const aiData = await callAiVision(file, lang); setScanning(false); setScanResult(aiData); }; reader.readAsDataURL(file); }}}/></label></div>)}</div></div></div>);
   }
 
+  // Community View
   if (view === "community") { 
     return (
       <div className="min-h-screen bg-[#F5F7F5] font-['Hind_Siliguri'] pb-20 p-4 animate-in fade-in duration-300">
@@ -406,6 +466,7 @@ const Dashboard = () => {
     ); 
   }
 
+  // Profile View
   if (view === "profile") {
     return (<div className="min-h-screen bg-[#F5F7F5] font-['Hind_Siliguri'] pb-20 p-4"><button onClick={() => setView("dashboard")} className="flex items-center gap-2 text-gray-600 mb-6 font-bold text-lg p-2 hover:bg-gray-100 rounded-lg w-full"><ArrowLeft /> {t.dashboard}</button><div className="bg-white p-6 rounded-3xl shadow-lg text-center mb-6 border border-gray-100 relative overflow-hidden"><div className={`absolute top-0 left-0 w-full h-2 ${badge.bg}`}></div><div className={`w-28 h-28 mx-auto rounded-full flex items-center justify-center mb-4 ${badge.bg} border-4 border-white shadow-2xl relative z-10`}>{badge.icon}</div><h2 className="text-2xl font-bold text-gray-800 capitalize">{username}</h2><div className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${badge.bg} ${badge.color}`}>{badge.name}</div><div className="mt-6 text-left"><div className="flex justify-between text-xs font-bold mb-1"><span className="text-gray-500">{t.current_profit}: ৳{formatCurrency(netProfit, lang)}</span><span className="text-[#2F5233]">{t.target}: ৳{formatCurrency(badge.next, lang)}</span></div><div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${badge.progressPercent}%` }} className="h-full bg-gradient-to-r from-green-400 to-[#2F5233]" /></div></div></div></div>);
   }
@@ -414,6 +475,51 @@ const Dashboard = () => {
   if (view === "chat") {
     const handleSendChat = async () => { if (!chatInput.trim()) return; const userMsg = { id: Date.now(), text: chatInput, sender: 'user' }; setChatMessages(prev => [...prev, userMsg]); setChatInput(""); setIsTyping(true); const reply = await callAiChat(userMsg.text); const botMsg = { id: Date.now() + 1, text: reply, sender: 'bot' }; setChatMessages(prev => [...prev, botMsg]); setIsTyping(false); };
     return (<div className="min-h-screen bg-[#E5E7EB] font-['Hind_Siliguri'] pb-20 flex flex-col"><div className="bg-[#2F5233] p-4 text-white flex items-center gap-3 sticky top-0 z-50 shadow-md"><button onClick={() => setView("dashboard")}><ArrowLeft /></button><div className="bg-white/20 p-2 rounded-full"><Bot size={24}/></div><div><h2 className="font-bold text-lg">{t.chat_title}</h2><p className="text-xs text-green-200">Real AI</p></div></div><div className="flex-1 p-4 space-y-4 overflow-y-auto">{chatMessages.map((msg) => (<div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[85%] p-3 rounded-2xl shadow-sm text-sm ${msg.sender === 'user' ? 'bg-[#2F5233] text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none'}`}>{msg.text}</div></div>))}</div><div className="p-4 bg-white sticky bottom-0 border-t border-gray-200 flex gap-2"><input type="text" className="flex-1 bg-gray-100 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" placeholder={t.chat_placeholder} value={chatInput} onChange={(e) => setChatInput(e.target.value)} /><button onClick={handleSendChat} className="bg-[#2F5233] text-white p-3 rounded-full shadow-lg active:scale-90 transition"><Send size={20}/></button></div></div>);
+  }
+
+  // --- LOCAL RISK MAP VIEW ---
+  if (view === "risk_map") {
+    return (
+      <div className="min-h-screen bg-white font-['Hind_Siliguri'] flex flex-col">
+        <div className="bg-[#2F5233] p-4 text-white flex items-center gap-3 sticky top-0 z-50 shadow-md">
+          <button onClick={() => setView("dashboard")} className="p-1 hover:bg-white/20 rounded-full transition"><ArrowLeft /></button>
+          <div className="flex-1">
+            <h2 className="font-bold text-lg flex items-center gap-2"><Map size={20} /> {t.risk_map_title}</h2>
+            <p className="text-xs text-green-100 opacity-90">{t.risk_map_desc}</p>
+          </div>
+          <div className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-blue-400"></div> {t[selectedDivision] || selectedDivision}
+          </div>
+        </div>
+        
+        <div className="flex-1 relative bg-gray-100">
+          {/* Map Container */}
+          <div ref={mapContainerRef} className="absolute inset-0 z-0" />
+          
+          {/* Legend Overlay */}
+          <div className="absolute bottom-6 left-4 right-4 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-gray-200 z-10">
+            <h4 className="font-bold text-gray-700 text-sm mb-3 border-b pb-2 flex justify-between">
+              <span>{t.risk_level}</span>
+              <span className="text-gray-400 font-normal text-xs">{t.crop_type} (Demo)</span>
+            </h4>
+            <div className="flex justify-between items-center text-xs font-bold">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500 border border-white shadow"></div>
+                <span>{t.risk_low}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-yellow-500 border border-white shadow"></div>
+                <span>{t.risk_medium}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-600 border border-white shadow"></div>
+                <span>{t.risk_high}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // --- DASHBOARD RENDER ---
@@ -429,7 +535,7 @@ const Dashboard = () => {
           <div><h1 className="text-xl font-bold text-[#2F5233] leading-tight">{t.app_title}</h1><p className="text-xs text-gray-500 font-medium">{t.sub_title}</p></div>
         </div>
         
-        {/* RIGHT SIDE HEADER OPTIONS - FIXED OVERLAP & MISSING ITEMS */}
+        {/* RIGHT SIDE HEADER OPTIONS */}
         <div className="flex items-center gap-2">
           {/* Language Switcher */}
           <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} className="bg-white border border-gray-300 p-2 rounded-full text-gray-600 hover:bg-gray-100 transition shadow-sm font-bold text-xs">{lang === 'bn' ? 'EN' : 'বাংলা'}</button>
@@ -452,7 +558,21 @@ const Dashboard = () => {
         </div>
       </header>
       
-      {showMenu && (<div className="absolute top-20 left-4 z-50 bg-white shadow-xl rounded-xl border border-gray-100 p-2 w-56 animate-in slide-in-from-top-2"><button onClick={() => {setShowMenu(false); setView("scanner")}} className="flex gap-3 w-full p-3 hover:bg-green-50 rounded-lg font-bold text-gray-700"><ScanLine size={18}/> {t.scanner_title}</button><button onClick={() => {setShowMenu(false); setView("chat")}} className="flex gap-3 w-full p-3 hover:bg-blue-50 rounded-lg font-bold text-gray-700"><MessageCircle size={18}/> {t.chat_title}</button></div>)}
+      {/* Menu Options - Marked Area for New Feature */}
+      {showMenu && (
+        <div className="absolute top-20 left-4 z-50 bg-white shadow-xl rounded-xl border border-gray-100 p-2 w-64 animate-in slide-in-from-top-2">
+          <button onClick={() => {setShowMenu(false); setView("scanner")}} className="flex gap-3 w-full p-3 hover:bg-green-50 rounded-lg font-bold text-gray-700">
+            <ScanLine size={18}/> {t.scanner_title}
+          </button>
+          <button onClick={() => {setShowMenu(false); setView("chat")}} className="flex gap-3 w-full p-3 hover:bg-blue-50 rounded-lg font-bold text-gray-700">
+            <MessageCircle size={18}/> {t.chat_title}
+          </button>
+          {/* New Local Risk Map Option */}
+          <button onClick={() => {setShowMenu(false); setView("risk_map")}} className="flex gap-3 w-full p-3 hover:bg-orange-50 rounded-lg font-bold text-gray-700">
+            <Map size={18} className="text-orange-600"/> {t.risk_map_title}
+          </button>
+        </div>
+      )}
 
       <div className="p-4 space-y-6 max-w-md mx-auto">
         {/* Profit Card */}
