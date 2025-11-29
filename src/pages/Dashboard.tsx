@@ -4,7 +4,7 @@ import {
   TrendingUp, TrendingDown, Sprout, Package, FlaskConical, User, Award, Medal, Trophy, Star, Lock, 
   Zap, Globe, Users, Search, Phone, UserPlus, Loader2, Camera, Upload, ScanLine, X, FileText, 
   CheckCircle, AlertTriangle, MessageCircle, Send, Bot, Mic, StopCircle, Volume2, VolumeX, Bell,
-  Fan, Info, // Added Fan and Info for Smart Alert
+  Fan, Info, 
   Map as MapIcon 
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -305,10 +305,24 @@ const Dashboard = () => {
             const lngOffset = (Math.random() - 0.5) * 0.06;
             const risk = Math.random() > 0.6 ? 'High' : (Math.random() > 0.3 ? 'Medium' : 'Low');
             const color = risk === 'High' ? '#DC2626' : (risk === 'Medium' ? '#EAB308' : '#16A34A');
-            const recCrop = CROPS[(Math.floor(Math.random() * CROPS.length) + 1) % CROPS.length].split(' (')[0];
+            
+            // Generate Random Crops for each location (Unique per marker)
+            const cropIndex = Math.floor(Math.random() * CROPS.length);
+            const recCrop = CROPS[cropIndex % CROPS.length].split(' (')[0];
+            const avoidCrop = CROPS[(cropIndex + 2) % CROPS.length].split(' (')[0];
+
             const riskLabel = risk === 'High' ? t.risk_high : (risk === 'Medium' ? t.risk_medium : t.risk_low);
             const areaName = lang === 'bn' ? `${t[selectedDivision] || selectedDivision} জোন-${toBanglaDigits(i + 1)}` : `${selectedDivision} Zone-${i + 1}`;
-            L.marker([center.lat + latOffset, center.lng + lngOffset], { icon: getIcon(color) }).addTo(map).bindPopup(`<div style="font-family: 'Hind Siliguri', sans-serif;"><p style="font-size: 12px; color: #6b7280; font-weight: bold;">${lang === 'bn' ? 'এলাকা' : 'Area'}: ${areaName}</p><p style="font-size: 14px; font-weight: bold;">${t.risk_level}: <span style="color: ${color};">${riskLabel}</span></p><p style="font-size: 12px;">✅ ${t.recommended}: ${recCrop}</p></div>`);
+            
+            L.marker([center.lat + latOffset, center.lng + lngOffset], { icon: getIcon(color) }).addTo(map).bindPopup(`
+              <div style="font-family: 'Hind Siliguri', sans-serif; min-width: 150px;">
+                <p style="font-size: 12px; color: #6b7280; font-weight: bold; margin-bottom: 4px;">${lang === 'bn' ? 'এলাকা' : 'Area'}: ${areaName}</p>
+                <p style="font-size: 14px; font-weight: bold; margin-bottom: 6px;">${t.risk_level}: <span style="color: ${color};">${riskLabel}</span></p>
+                <hr style="margin: 4px 0; border: 0; border-top: 1px solid #eee;">
+                <p style="font-size: 12px; margin-bottom: 2px;">✅ ${t.recommended}: <span style="color: #16A34A; font-weight: bold;">${recCrop}</span></p>
+                <p style="font-size: 12px; margin-bottom: 0;">❌ ${t.avoid}: <span style="color: #DC2626; font-weight: bold;">${avoidCrop}</span></p>
+              </div>
+            `);
           }
           mapInstanceRef.current = map;
           setMapInitialized(true);
@@ -494,7 +508,44 @@ const Dashboard = () => {
   }
 
   if (view === "risk_map") {
-    return (<div className="min-h-screen bg-white font-['Hind_Siliguri'] flex flex-col"><style>{`.leaflet-pane img, .leaflet-tile, .leaflet-marker-icon, .leaflet-marker-shadow { max-width: none !important; max-height: none !important; } .leaflet-container { z-index: 0; } .custom-div-icon { background: transparent; border: none; }`}</style><div className="bg-[#2F5233] p-4 text-white flex items-center gap-3 sticky top-0 z-50 shadow-md"><button onClick={() => setView("dashboard")} className="p-1 hover:bg-white/20 rounded-full transition"><ArrowLeft /></button><div className="flex-1"><h2 className="font-bold text-lg flex items-center gap-2"><MapIcon size={20} /> {t.risk_map_title}</h2><p className="text-xs text-green-100 opacity-90">{t.risk_map_desc}</p></div></div><div className="flex-1 relative bg-gray-100"><div id="map-container" ref={mapContainerRef} className="absolute inset-0 z-0" /><div className="absolute bottom-6 left-4 right-4 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-gray-200 z-10"><h4 className="font-bold text-gray-700 text-sm mb-3 border-b pb-2 flex justify-between"><span>{t.risk_level}</span><span className="text-gray-400 font-normal text-xs">{t.crop_type} (Demo)</span></h4><div className="flex justify-between items-center text-xs font-bold"><div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500 border border-white shadow"></div><span>{t.risk_low}</span></div><div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-yellow-500 border border-white shadow"></div><span>{t.risk_medium}</span></div><div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-600 border border-white shadow"></div><span>{t.risk_high}</span></div></div></div></div></div>);
+    return (
+      <div className="min-h-screen bg-white font-['Hind_Siliguri'] flex flex-col">
+        <style>{`.leaflet-pane img, .leaflet-tile, .leaflet-marker-icon, .leaflet-marker-shadow { max-width: none !important; max-height: none !important; } .leaflet-container { z-index: 0; } .custom-div-icon { background: transparent; border: none; }`}</style>
+        <div className="bg-[#2F5233] p-4 text-white flex items-center gap-3 sticky top-0 z-50 shadow-md">
+          <button onClick={() => setView("dashboard")} className="p-1 hover:bg-white/20 rounded-full transition"><ArrowLeft /></button>
+          <div className="flex-1">
+            <h2 className="font-bold text-lg flex items-center gap-2"><MapIcon size={20} /> {t.risk_map_title}</h2>
+            <p className="text-xs text-green-100 opacity-90">{t.risk_map_desc}</p>
+          </div>
+          <div className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-400"></div> {t[selectedDivision] || selectedDivision}</div>
+        </div>
+        <div className="flex-1 relative bg-gray-100">
+          <div id="map-container" ref={mapContainerRef} className="absolute inset-0 z-0" />
+          
+          {/* Legend / Black Box Area */}
+          <div className="absolute bottom-6 left-4 right-4 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-gray-200 z-10">
+            <h4 className="font-bold text-gray-700 text-sm mb-3 border-b pb-2 flex justify-between">
+              <span>{t.risk_level}</span>
+              <span className="text-gray-400 font-normal text-xs">{t.crop_type} (Demo)</span>
+            </h4>
+            <div className="flex justify-between items-center text-xs font-bold mb-3">
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500 border border-white shadow"></div><span>{t.risk_low}</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-yellow-500 border border-white shadow"></div><span>{t.risk_medium}</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-600 border border-white shadow"></div><span>{t.risk_high}</span></div>
+            </div>
+            
+            {/* Added: Preferred and Avoided Summary for Legend */}
+            <div className="bg-gray-50 p-2 rounded-lg border border-gray-100 mt-2">
+                <p className="text-xs text-gray-500 mb-1 font-bold">এলাকার পরামর্শ (Regional Advice):</p>
+                <div className="flex justify-between text-xs">
+                     <span className="text-green-700 font-bold flex items-center gap-1">✅ {CROPS[0].split(' (')[0]} (Priority)</span>
+                     <span className="text-red-600 font-bold flex items-center gap-1">❌ {CROPS[1].split(' (')[0]}</span>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (view === "profile") { return (<div className="min-h-screen bg-[#F5F7F5] font-['Hind_Siliguri'] pb-20 p-4"><button onClick={() => setView("dashboard")} className="flex items-center gap-2 text-gray-600 mb-6 font-bold text-lg p-2 hover:bg-gray-100 rounded-lg w-full"><ArrowLeft /> {t.dashboard}</button><div className="bg-white p-6 rounded-3xl shadow-lg text-center mb-6 border border-gray-100 relative overflow-hidden"><div className={`absolute top-0 left-0 w-full h-2 ${badge.bg}`}></div><div className={`w-28 h-28 mx-auto rounded-full flex items-center justify-center mb-4 ${badge.bg} border-4 border-white shadow-2xl relative z-10`}>{badge.icon}</div><h2 className="text-2xl font-bold text-gray-800 capitalize">{username}</h2><div className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${badge.bg} ${badge.color}`}>{badge.name}</div><div className="mt-6 text-left"><div className="flex justify-between text-xs font-bold mb-1"><span className="text-gray-500">{t.current_profit}: ৳{formatCurrency(netProfit, lang)}</span><span className="text-[#2F5233]">{t.target}: ৳{formatCurrency(badge.next, lang)}</span></div><div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${badge.progressPercent}%` }} className="h-full bg-gradient-to-r from-green-400 to-[#2F5233]" /></div></div></div></div>); }
