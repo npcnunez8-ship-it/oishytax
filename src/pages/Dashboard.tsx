@@ -256,9 +256,16 @@ const Dashboard = () => {
 
   // Map Initialization Effect
   useEffect(() => {
-    if (view === "risk_map" && mapContainerRef.current && !mapInstanceRef.current && (window as any).L) {
+    if (view === "risk_map" && mapContainerRef.current && (window as any).L) {
       const L = (window as any).L;
       const center = DIVISION_DATA[selectedDivision] || DIVISION_DATA["Dhaka"];
+      
+      // Cleanup previous map instance if it exists to allow re-render with new center
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+
       const map = L.map(mapContainerRef.current).setView([center.lat, center.lng], 13);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
@@ -283,7 +290,7 @@ const Dashboard = () => {
         const lngOffset = (Math.random() - 0.5) * 0.06;
         const risk = Math.random() > 0.6 ? 'High' : (Math.random() > 0.3 ? 'Medium' : 'Low');
         const color = risk === 'High' ? 'bg-red-600' : (risk === 'Medium' ? 'bg-yellow-500' : 'bg-green-600');
-        const crop = CROPS[Math.floor(Math.random() * CROPS.length)].split(' (')[0]; // Get English name for simplicity in random gen
+        const crop = CROPS[Math.floor(Math.random() * CROPS.length)].split(' (')[0]; 
         
         // Localized Risk Label
         const riskLabel = risk === 'High' ? t.risk_high : (risk === 'Medium' ? t.risk_medium : t.risk_low);
@@ -307,7 +314,7 @@ const Dashboard = () => {
     }
     
     return () => {
-      if (view !== "risk_map" && mapInstanceRef.current) {
+      if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
         setMapInitialized(false);
