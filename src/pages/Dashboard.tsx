@@ -138,10 +138,11 @@ const TRANSLATIONS: any = {
     chat_typing: "এআই ভাবছে...",
     smart_alert_title: "স্মার্ট অ্যালার্ট (সতর্কবার্তা)",
     smart_alert_action: "করণীয় দেখুন",
-    // New Risk Map Translations
+    // New Risk Map Translations with Crop Recommendations
     risk_map_title: "লোকাল রিস্ক ম্যাপ", risk_map_desc: "আপনার এলাকার ঝুঁকির চিত্র",
     risk_high: "উচ্চ", risk_medium: "মাঝারি", risk_low: "কম",
-    risk_level: "ঝুঁকি", crop_type: "ফসল", last_update: "সর্বশেষ আপডেট"
+    risk_level: "ঝুঁকি", crop_type: "ফসল", last_update: "সর্বশেষ আপডেট",
+    recommended: "উপযুক্ত", avoid: "বর্জনীয়"
   },
   en: {
     app_title: "KrishiBondhu 2.0", sub_title: "Krishoker Hasi", net_profit: "Net Profit", net_loss: "Net Loss",
@@ -163,10 +164,11 @@ const TRANSLATIONS: any = {
     chat_typing: "AI is thinking...",
     smart_alert_title: "Smart Alert",
     smart_alert_action: "See Action",
-    // New Risk Map Translations
+    // New Risk Map Translations with Crop Recommendations
     risk_map_title: "Local Risk-Map", risk_map_desc: "Visualize community risks",
     risk_high: "High", risk_medium: "Medium", risk_low: "Low",
-    risk_level: "Risk", crop_type: "Crop", last_update: "Last Update"
+    risk_level: "Risk", crop_type: "Crop", last_update: "Last Update",
+    recommended: "Suitable", avoid: "Avoid"
   }
 };
 
@@ -313,7 +315,11 @@ const Dashboard = () => {
             const risk = Math.random() > 0.6 ? 'High' : (Math.random() > 0.3 ? 'Medium' : 'Low');
             // Colors: High=Red, Medium=Yellow, Low=Green
             const color = risk === 'High' ? '#DC2626' : (risk === 'Medium' ? '#EAB308' : '#16A34A');
-            const crop = CROPS[Math.floor(Math.random() * CROPS.length)].split(' (')[0]; 
+            const crop = CROPS[Math.floor(Math.random() * CROPS.length)].split(' (')[0];
+            
+            // RECOMMENDATION LOGIC
+            const recCrop = CROPS[(Math.floor(Math.random() * CROPS.length) + 1) % CROPS.length].split(' (')[0];
+            const avoidCrop = CROPS[(Math.floor(Math.random() * CROPS.length) + 2) % CROPS.length].split(' (')[0];
             
             // Localized Risk Label
             const riskLabel = risk === 'High' ? t.risk_high : (risk === 'Medium' ? t.risk_medium : t.risk_low);
@@ -327,17 +333,20 @@ const Dashboard = () => {
             const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${center.lat + latOffset},${center.lng + lngOffset}`;
 
             const popupContent = `
-              <div style="font-family: 'Hind Siliguri', sans-serif; min-width: 140px;">
+              <div style="font-family: 'Hind Siliguri', sans-serif; min-width: 150px;">
                 <p style="font-size: 12px; color: #6b7280; font-weight: bold; margin-bottom: 4px;">
                    ${lang === 'bn' ? 'এলাকা' : 'Area'}: 
                    <a href="${googleMapsUrl}" target="_blank" style="color: #2563EB; text-decoration: none; border-bottom: 1px dotted #2563EB;">${areaName}</a>
                 </p>
                 <p style="font-size: 12px; color: #6b7280; font-weight: bold; margin-bottom: 4px;">${t.crop_type}: <span style="color: #1f2937;">${crop}</span></p>
-                <p style="font-size: 14px; font-weight: bold; margin-bottom: 4px;">
+                <p style="font-size: 14px; font-weight: bold; margin-bottom: 6px;">
                   ${t.risk_level}: 
                   <span style="color: ${color};">${riskLabel}</span>
                 </p>
-                <p style="font-size: 10px; color: #9ca3af; text-align: right; margin: 0;">${t.last_update}: ${timeAgo} মিনিট আগে</p>
+                <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 4px 0;">
+                <p style="font-size: 12px; margin-bottom: 2px;">✅ ${t.recommended}: <span style="color: #16A34A; font-weight: bold;">${recCrop}</span></p>
+                <p style="font-size: 12px; margin-bottom: 4px;">❌ ${t.avoid}: <span style="color: #DC2626; font-weight: bold;">${avoidCrop}</span></p>
+                <p style="font-size: 10px; color: #9ca3af; text-align: right; margin: 0; margin-top: 4px;">${t.last_update}: ${timeAgo} মিনিট আগে</p>
               </div>
             `;
 
