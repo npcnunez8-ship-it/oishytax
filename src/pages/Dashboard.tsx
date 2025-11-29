@@ -4,7 +4,7 @@ import {
   TrendingUp, TrendingDown, Sprout, Package, FlaskConical, User, Award, 
   Medal, Trophy, Star, Lock, Zap, Users, Search, 
   UserPlus, Loader2, Camera, Upload, ScanLine, FileText, 
-  MessageCircle, Send, Bot, Wallet, Fan, AlertTriangle, Info, Bell
+  MessageCircle, Send, Bot, Wallet, Fan, AlertTriangle, Info, Bell, MapPin, CheckCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
@@ -261,6 +261,18 @@ const Dashboard = () => {
     setCost(""); setWeight(""); setQuantity("");
   };
 
+  const handleSearchFriend = async () => {
+      setSearchLoading(true); setSearchError(""); setFoundFriend(null);
+      setTimeout(() => {
+          const friend = DEMO_FARMERS.find(f => f.username.toLowerCase() === searchQuery.toLowerCase());
+          if (friend) {
+              const friendBadge = getBadgeData(friend.profit); 
+              setFoundFriend({ ...friend, badgeName: friendBadge.name, badgeColor: friendBadge.color });
+          } else { setSearchError(t.not_found); }
+          setSearchLoading(false);
+      }, 800);
+  };
+
   const handleDelete = (id: number) => {
     const updated = transactions.filter(t => t.id !== id);
     setTransactions(updated);
@@ -281,15 +293,21 @@ const Dashboard = () => {
 
   // --- SMART ALERT ENGINE ---
   const smartAlert = useMemo(() => {
+    // 1. DATA INPUTS
+    // We simulate the environmental conditions.
+    // In a real app, 'hasPotatoStorage' would come from database/transactions.
+    // For this demo, we assume the user has potatoes to trigger the specific requirement.
     const isRainy = currentWeather.rain > 50;
     const isHumid = currentWeather.humidity > 80;
     const isHot = currentWeather.temp > 35;
     
-    // Scenario 1: Critical (Potato + Rain + Humidity)
+    // 2. DECISION LOGIC
+    // Scenario: Critical (Potato + Rain + Humidity)
+    // Requirement: "Smart Alert" with specific text for Potato storage.
     if (isRainy && isHumid) {
       return {
         level: 'Critical',
-        title: lang === 'bn' ? 'জরুরি সতর্কতা (আলু)' : 'Critical Alert (Potato)',
+        title: lang === 'bn' ? 'জরুরি সতর্কতা' : 'Critical Alert',
         message: lang === 'bn'
           ? "আগামীকাল বৃষ্টি হবে এবং আপনার আলুর গুদামে আর্দ্রতা বেশি। এখনই ফ্যান চালু করুন।"
           : "Tomorrow it will rain and humidity is high in potato storage. Turn on fans now.",
@@ -299,7 +317,7 @@ const Dashboard = () => {
       };
     }
     
-    // Scenario 2: Warning (High Temp)
+    // Scenario: Warning (High Temp)
     if (isHot) {
       return {
         level: 'Warning',
@@ -313,13 +331,13 @@ const Dashboard = () => {
       };
     }
 
-    // Scenario 3: Good
+    // Scenario: Good
     return {
       level: 'Good',
-      title: lang === 'bn' ? 'আবহাওয়া বার্তা' : 'Weather Update',
-      message: lang === 'bn' ? "আবহাওয়া অনুকূলে আছে।" : "Weather conditions are favorable.",
+      title: lang === 'bn' ? 'স্মার্ট বার্তা' : 'Smart Update',
+      message: lang === 'bn' ? "আবহাওয়া অনুকূলে আছে। নিয়মিত পরিচর্যা করুন।" : "Weather conditions are favorable. Continue regular care.",
       color: "bg-green-50 border-green-200 text-green-800",
-      icon: <Sprout className="text-green-600" size={24} />,
+      icon: <CheckCircle className="text-green-600" size={24} />,
       borderColor: "border-green-500"
     };
   }, [currentWeather, lang]);
@@ -354,7 +372,40 @@ const Dashboard = () => {
     return (<div className="min-h-screen bg-black font-['Hind_Siliguri'] pb-20 p-4 animate-in fade-in duration-300 flex flex-col items-center justify-center relative"><button onClick={() => setView("dashboard")} className="absolute top-4 left-4 z-50 bg-white/20 p-2 rounded-full text-white backdrop-blur-md"><ArrowLeft /></button><div className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl relative min-h-[60vh] flex flex-col"><div className="bg-[#2F5233] p-4 text-white text-center font-bold flex items-center justify-center gap-2"><ScanLine className="animate-pulse"/> {t.scanner_title}</div><div className="flex-1 bg-gray-100 flex items-center justify-center relative p-4">{scannedImage ? (<img src={scannedImage} alt="Crop" className="max-h-[400px] rounded-lg shadow-md object-cover" />) : (<div className="text-gray-400 flex flex-col items-center"><Camera size={64} className="mb-4 opacity-50"/><p>Select or Take a Photo</p></div>)}{scanning && (<div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center text-white z-20"><Loader2 size={48} className="animate-spin mb-4 text-[#E9D66B]"/><p className="font-bold text-lg animate-pulse">{t.analyzing}</p></div>)}</div><div className="p-6 bg-white border-t border-gray-100">{scanResult ? (<motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-left"><div className="flex justify-between items-center mb-4"><h3 className={`text-xl font-bold ${scanResult.color} flex items-center gap-2`}>{scanResult.status}</h3><span className="px-2 py-1 bg-gray-100 text-xs font-bold rounded-lg text-gray-500">{scanResult.confidence}</span></div><div className="bg-gray-50 p-4 rounded-xl border border-gray-200"><h4 className="font-bold text-gray-700 mb-2 flex items-center gap-2"><FileText size={16}/> {t.advice_title}</h4><ul className="text-sm text-gray-600 space-y-2">{scanResult.advice.map((tip: string, i: number) => (<li key={i}>{tip}</li>))}</ul></div><button onClick={() => {setScannedImage(null); setScanResult(null)}} className="mt-6 w-full bg-gray-900 text-white py-3 rounded-xl font-bold">Scan Again</button></motion.div>) : (<div className="flex gap-4"><label className="flex-1 bg-blue-50 text-blue-600 border border-blue-200 py-4 rounded-xl flex flex-col items-center justify-center gap-2 font-bold cursor-pointer active:scale-95 transition"><Upload size={24}/> {t.upload_photo}<input type="file" accept="image/*" className="hidden" onChange={(e) => {const file = e.target.files?.[0]; if(file) { const reader = new FileReader(); reader.onloadend = async () => { setScannedImage(reader.result as string); setScanning(true); setScanResult(null); const aiData = await callAiVision(file, lang); setScanning(false); setScanResult(aiData); }; reader.readAsDataURL(file); }}}/></label></div>)}</div></div></div>);
   }
 
-  // Profile & Community views omitted for brevity (same structure as original but clean)
+  if (view === "community") { 
+    return (
+      <div className="min-h-screen bg-[#F5F7F5] font-['Hind_Siliguri'] pb-20 p-4 animate-in fade-in duration-300">
+        <button onClick={() => setView("dashboard")} className="flex items-center gap-2 text-gray-600 mb-6 font-bold text-lg p-2 hover:bg-gray-100 rounded-lg w-full"><ArrowLeft /> {t.dashboard}</button>
+        <h2 className="text-2xl font-bold text-[#2F5233] mb-4">{t.community}</h2>
+        <div className="flex gap-2 mb-6">
+          <div className="relative flex-1">
+            <input type="text" placeholder={t.search_placeholder} className="w-full p-3 pl-10 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}/>
+            <Search className="absolute left-3 top-3 text-gray-400" size={20}/>
+          </div>
+          <button onClick={handleSearchFriend} disabled={searchLoading} className="bg-[#2F5233] text-white px-4 rounded-xl font-bold disabled:opacity-50">{searchLoading ? <Loader2 className="animate-spin"/> : t.search_btn}</button>
+        </div>
+        {searchError && <p className="text-red-500 text-center mb-4">{searchError}</p>}
+        {foundFriend && (
+          <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-700"><User size={30} /></div>
+              <div><h3 className="text-xl font-bold capitalize">{foundFriend.name}</h3><p className="text-sm text-gray-500">@{foundFriend.username}</p></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-gray-50 p-3 rounded-xl"><p className="text-xs text-gray-500">{t.contact}</p><p className="font-bold">{foundFriend.contact}</p></div>
+              <div className="bg-gray-50 p-3 rounded-xl"><p className="text-xs text-gray-500">{t.friend_badge}</p><p className={`font-bold ${foundFriend.badgeColor}`}>{foundFriend.badgeName}</p></div>
+            </div>
+            <div className="p-4 bg-green-50 rounded-xl border border-green-100">
+              <p className="text-sm text-gray-600 mb-1">{t.friend_profit}</p>
+              <h2 className="text-3xl font-bold text-[#2F5233]">৳ {formatCurrency(foundFriend.profit, lang)}</h2>
+            </div>
+            <button className="w-full mt-4 bg-gray-900 text-white py-3 rounded-xl flex items-center justify-center gap-2 font-bold"><UserPlus size={18}/> Follow Farmer</button>
+          </motion.div>
+        )}
+      </div>
+    ); 
+  }
+
   if (view === "profile") {
     return (<div className="min-h-screen bg-[#F5F7F5] font-['Hind_Siliguri'] pb-20 p-4"><button onClick={() => setView("dashboard")} className="flex items-center gap-2 text-gray-600 mb-6 font-bold text-lg p-2 hover:bg-gray-100 rounded-lg w-full"><ArrowLeft /> {t.dashboard}</button><div className="bg-white p-6 rounded-3xl shadow-lg text-center mb-6 border border-gray-100 relative overflow-hidden"><div className={`absolute top-0 left-0 w-full h-2 ${badge.bg}`}></div><div className={`w-28 h-28 mx-auto rounded-full flex items-center justify-center mb-4 ${badge.bg} border-4 border-white shadow-2xl relative z-10`}>{badge.icon}</div><h2 className="text-2xl font-bold text-gray-800 capitalize">{username}</h2><div className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${badge.bg} ${badge.color}`}>{badge.name}</div><div className="mt-6 text-left"><div className="flex justify-between text-xs font-bold mb-1"><span className="text-gray-500">{t.current_profit}: ৳{formatCurrency(netProfit, lang)}</span><span className="text-[#2F5233]">{t.target}: ৳{formatCurrency(badge.next, lang)}</span></div><div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${badge.progressPercent}%` }} className="h-full bg-gradient-to-r from-green-400 to-[#2F5233]" /></div></div></div></div>);
   }
@@ -377,9 +428,27 @@ const Dashboard = () => {
           </div>
           <div><h1 className="text-xl font-bold text-[#2F5233] leading-tight">{t.app_title}</h1><p className="text-xs text-gray-500 font-medium">{t.sub_title}</p></div>
         </div>
+        
+        {/* RIGHT SIDE HEADER OPTIONS - FIXED OVERLAP & MISSING ITEMS */}
         <div className="flex items-center gap-2">
-          <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} className="bg-white border border-gray-300 p-2 rounded-full text-gray-600 font-bold text-xs shadow-sm">{lang === 'bn' ? 'EN' : 'বাংলা'}</button>
-          <button onClick={() => setView("profile")} className="bg-white border border-gray-300 p-2 rounded-full text-gray-600 shadow-sm relative"><User size={20} />{netProfit > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>}</button>
+          {/* Language Switcher */}
+          <button onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')} className="bg-white border border-gray-300 p-2 rounded-full text-gray-600 hover:bg-gray-100 transition shadow-sm font-bold text-xs">{lang === 'bn' ? 'EN' : 'বাংলা'}</button>
+          
+          {/* Community Button */}
+          <button onClick={() => setView("community")} className="bg-white border border-gray-300 p-2 rounded-full text-gray-600 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 transition shadow-sm">
+            <Users size={20} />
+          </button>
+          
+          {/* Profile Button */}
+          <button onClick={() => setView("profile")} className="bg-white border border-gray-300 p-2 rounded-full text-gray-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition relative shadow-sm">
+            <User size={20} />
+            {netProfit > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>}
+          </button>
+
+          {/* Offline Indicator */}
+          <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold ${isOffline ? 'bg-gray-200 text-gray-600' : 'bg-green-100 text-green-700'}`}>
+            <Cloud size={14} />{isOffline ? "Off" : "On"}
+          </div>
         </div>
       </header>
       
@@ -410,18 +479,21 @@ const Dashboard = () => {
             <div className="bg-orange-50 p-3 rounded-xl relative"><div className="flex items-center gap-2 text-orange-500 mb-1"><MapPin size={16} /> {t.location}</div><p className="text-xl font-bold text-gray-800 truncate">{t[selectedDivision] || selectedDivision}</p><select value={selectedDivision} onChange={(e) => setSelectedDivision(e.target.value)} className="absolute inset-0 w-full opacity-0">{DIVISIONS.map(div => <option key={div} value={div}>{div}</option>)}</select></div>
           </div>
 
-          {/* 🔴 RED MARKED AREA REPLACEMENT: SMART ALERT SYSTEM 🔴 */}
+          {/* 🔴 SMART ALERT SYSTEM (DECISION ENGINE) 🔴 */}
           <div className={`border-l-4 p-4 rounded-r-lg shadow-sm flex items-start gap-3 transition-all duration-500 ${smartAlert.color} ${smartAlert.borderColor}`}>
             <div className={`mt-1 p-2 bg-white rounded-full shadow-sm`}>
               {smartAlert.icon}
             </div>
             <div className="flex-1">
-              <h4 className="font-bold text-sm uppercase tracking-wide opacity-80 mb-1">{smartAlert.title}</h4>
+              <h4 className="font-bold text-sm uppercase tracking-wide opacity-80 mb-1 flex items-center justify-between">
+                {smartAlert.title}
+                {smartAlert.level === 'Critical' && <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-red-400 opacity-75 right-8"></span>}
+              </h4>
               <p className="text-sm font-bold leading-relaxed">{smartAlert.message}</p>
               {smartAlert.level === 'Critical' && (
-                <div className="mt-2 flex items-center gap-2 text-xs font-bold bg-white/50 p-1.5 rounded inline-block">
-                  <Bell size={12} className="animate-bounce" /> {t.smart_alert_action}
-                </div>
+                <button className="mt-3 flex items-center gap-2 text-xs font-bold bg-white px-3 py-1.5 rounded-full shadow-sm hover:scale-105 transition-transform text-red-600 border border-red-100">
+                  <Bell size={12} className="fill-red-600 animate-bounce" /> {t.smart_alert_action}
+                </button>
               )}
             </div>
           </div>
@@ -461,4 +533,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-const MapPin = ({size}: {size: number}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>;
