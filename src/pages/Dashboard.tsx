@@ -319,8 +319,19 @@ const Dashboard = () => {
             const riskLabel = risk === 'High' ? t.risk_high : (risk === 'Medium' ? t.risk_medium : t.risk_low);
             const timeAgo = toBanglaDigits(Math.floor(Math.random() * 59) + 1);
 
+            // Mock Area Name & Google Maps Link
+            const areaName = lang === 'bn' 
+              ? `${t[selectedDivision] || selectedDivision} জোন-${toBanglaDigits(i + 1)}` 
+              : `${selectedDivision} Zone-${i + 1}`;
+            
+            const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${center.lat + latOffset},${center.lng + lngOffset}`;
+
             const popupContent = `
               <div style="font-family: 'Hind Siliguri', sans-serif; min-width: 140px;">
+                <p style="font-size: 12px; color: #6b7280; font-weight: bold; margin-bottom: 4px;">
+                   ${lang === 'bn' ? 'এলাকা' : 'Area'}: 
+                   <a href="${googleMapsUrl}" target="_blank" style="color: #2563EB; text-decoration: none; border-bottom: 1px dotted #2563EB;">${areaName}</a>
+                </p>
                 <p style="font-size: 12px; color: #6b7280; font-weight: bold; margin-bottom: 4px;">${t.crop_type}: <span style="color: #1f2937;">${crop}</span></p>
                 <p style="font-size: 14px; font-weight: bold; margin-bottom: 4px;">
                   ${t.risk_level}: 
