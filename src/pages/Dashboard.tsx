@@ -315,7 +315,7 @@ const Dashboard = () => {
             const risk = Math.random() > 0.6 ? 'High' : (Math.random() > 0.3 ? 'Medium' : 'Low');
             // Colors: High=Red, Medium=Yellow, Low=Green
             const color = risk === 'High' ? '#DC2626' : (risk === 'Medium' ? '#EAB308' : '#16A34A');
-            //const crop = CROPS[Math.floor(Math.random() * CROPS.length)].split(' (')[0];
+            const crop = CROPS[Math.floor(Math.random() * CROPS.length)].split(' (')[0];
             
             // RECOMMENDATION LOGIC
             const recCrop = CROPS[(Math.floor(Math.random() * CROPS.length) + 1) % CROPS.length].split(' (')[0];
@@ -338,7 +338,6 @@ const Dashboard = () => {
                    ${lang === 'bn' ? 'এলাকা' : 'Area'}: 
                    <a href="${googleMapsUrl}" target="_blank" style="color: #2563EB; text-decoration: none; border-bottom: 1px dotted #2563EB;">${areaName}</a>
                 </p>
-                <p style="font-size: 12px; color: #6b7280; font-weight: bold; margin-bottom: 4px;">${t.crop_type}: <span style="color: #1f2937;">${crop}</span></p>
                 <p style="font-size: 14px; font-weight: bold; margin-bottom: 6px;">
                   ${t.risk_level}: 
                   <span style="color: ${color};">${riskLabel}</span>
