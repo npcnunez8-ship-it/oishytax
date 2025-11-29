@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* HarvestGuard Design System - Bangla-First */
+
+@layer base {
+  :root {
+    /* Core Brand Colors */
+    --primary: 138 34% 25%;          /* #2F5233 Deep Green */
+    --primary-foreground: 60 51% 66%; /* Light gold text on primary */
+    
+    --secondary: 51 71% 66%;          /* #E9D66B Harvest Gold */
+    --secondary-foreground: 138 34% 25%; /* Deep green text on gold */
+    
+    /* Semantic Colors */
+    --background: 120 20% 97%;        /* #F8FAF8 */
+    --foreground: 138 34% 15%;        /* Dark green text */
+    
+    --card: 0 0% 100%;
+    --card-foreground: 138 34% 15%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 138 34% 15%;
+    
+    --muted: 120 15% 92%;
+    --muted-foreground: 138 20% 40%;
+    
+    --accent: 51 71% 66%;             /* Gold accent */
+    --accent-foreground: 138 34% 15%;
+    
+    --destructive: 0 72% 51%;         /* #D32F2F Error Red */
+    --destructive-foreground: 0 0% 100%;
+    
+    --warning: 38 92% 50%;            /* Orange for warnings */
+    --warning-foreground: 0 0% 100%;
+    
+    --success: 138 50% 40%;           /* Success green */
+    --success-foreground: 0 0% 100%;
+    
+    --border: 138 20% 85%;
+    --input: 138 20% 85%;
+    --ring: 138 34% 25%;
+    
+    --radius: 0.75rem;
+    
+    /* Gradients */
+    --gradient-hero: linear-gradient(180deg, hsl(138, 34%, 25%) 0%, hsl(0, 0%, 5%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(51, 71%, 66%) 0%, hsl(45, 80%, 55%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0, 0%, 100%) 0%, hsl(120, 15%, 97%) 100%);
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 8px hsl(138 34% 25% / 0.08);
+    --shadow-md: 0 4px 16px hsl(138 34% 25% / 0.12);
+    --shadow-lg: 0 8px 32px hsl(138 34% 25% / 0.16);
+    --shadow-gold: 0 4px 20px hsl(51 71% 66% / 0.4);
+    
+    /* Sidebar (keeping defaults for compatibility) */
+    --sidebar-background: 120 20% 97%;
+    --sidebar-foreground: 138 34% 15%;
+    --sidebar-primary: 138 34% 25%;
+    --sidebar-primary-foreground: 60 51% 66%;
+    --sidebar-accent: 51 71% 66%;
+    --sidebar-accent-foreground: 138 34% 15%;
+    --sidebar-border: 138 20% 85%;
+    --sidebar-ring: 138 34% 25%;
+  }
+
+  .dark {
+    --background: 138 30% 8%;
+    --foreground: 120 20% 95%;
+    
+    --card: 138 25% 12%;
+    --card-foreground: 120 20% 95%;
+    
+    --popover: 138 25% 12%;
+    --popover-foreground: 120 20% 95%;
+    
+    --primary: 138 40% 35%;
+    --primary-foreground: 120 20% 95%;
+    
+    --secondary: 51 60% 50%;
+    --secondary-foreground: 138 30% 8%;
+    
+    --muted: 138 20% 18%;
+    --muted-foreground: 138 15% 60%;
+    
+    --accent: 51 60% 50%;
+    --accent-foreground: 138 30% 8%;
+    
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 138 20% 20%;
+    --input: 138 20% 20%;
+    --ring: 51 60% 50%;
+    
+    --sidebar-background: 138 30% 8%;
+    --sidebar-foreground: 120 20% 95%;
+    --sidebar-primary: 51 60% 50%;
+    --sidebar-primary-foreground: 138 30% 8%;
+    --sidebar-accent: 138 25% 18%;
+    --sidebar-accent-foreground: 120 20% 95%;
+    --sidebar-border: 138 20% 20%;
+    --sidebar-ring: 51 60% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'Hind Siliguri', sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Hind Siliguri', sans-serif;
+    font-weight: 500;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Hind Siliguri', sans-serif;
+    font-weight: 700;
+  }
+}
+
+@layer utilities {
+  /* Custom animations */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 8s ease infinite;
+  }
+  
+  /* Progress bar fill animation */
+  .progress-fill {
+    transition: width 2s ease-out;
+  }
+  
+  /* Text glow effect */
+  .text-glow {
+    text-shadow: 0 0 20px hsl(51 71% 66% / 0.5);
+  }
+  
+  /* Card hover effect */
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
+}
