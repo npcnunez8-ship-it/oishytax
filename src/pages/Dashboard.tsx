@@ -311,6 +311,11 @@ const Dashboard = () => {
 
       mapInstanceRef.current = map;
       setMapInitialized(true);
+
+      // Fix for gray map area: force resize calculation
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
     }
     
     return () => {
@@ -488,6 +493,17 @@ const Dashboard = () => {
   if (view === "risk_map") {
     return (
       <div className="min-h-screen bg-white font-['Hind_Siliguri'] flex flex-col">
+        {/* Force Tailwind Image Fix for Leaflet */}
+        <style>{`
+          .leaflet-pane img, .leaflet-tile, .leaflet-marker-icon, .leaflet-marker-shadow {
+            max-width: none !important;
+            max-height: none !important;
+          }
+          .leaflet-container {
+            z-index: 0;
+          }
+        `}</style>
+        
         <div className="bg-[#2F5233] p-4 text-white flex items-center gap-3 sticky top-0 z-50 shadow-md">
           <button onClick={() => setView("dashboard")} className="p-1 hover:bg-white/20 rounded-full transition"><ArrowLeft /></button>
           <div className="flex-1">
@@ -501,7 +517,7 @@ const Dashboard = () => {
         
         <div className="flex-1 relative bg-gray-100">
           {/* Map Container */}
-          <div ref={mapContainerRef} className="absolute inset-0 z-0" />
+          <div id="map-container" ref={mapContainerRef} className="absolute inset-0 z-0" />
           
           {/* Legend Overlay */}
           <div className="absolute bottom-6 left-4 right-4 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-gray-200 z-10">
