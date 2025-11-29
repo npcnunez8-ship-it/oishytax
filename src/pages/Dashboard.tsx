@@ -5,7 +5,7 @@ import {
   Medal, Trophy, Star, Lock, Zap, Users, Search, 
   UserPlus, Loader2, Camera, Upload, ScanLine, FileText, 
   MessageCircle, Send, Bot, Wallet, Fan, AlertTriangle, Info, Bell, MapPin, CheckCircle,
-  Map // Added Map icon
+  Map as MapIcon // Renamed to avoid conflict with JS Map constructor
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
@@ -145,7 +145,7 @@ const TRANSLATIONS: any = {
   },
   en: {
     app_title: "KrishiBondhu 2.0", sub_title: "Krishoker Hasi", net_profit: "Net Profit", net_loss: "Net Loss",
-    income: "Income", expense: "Expense", weather: "Weather", temp: "Temperature", humidity: "Humidity", rain: "Rain Chance",
+    income: "Income", expense: "Expenses", weather: "Weather", temp: "Temperature", humidity: "Humidity", rain: "Rain Chance",
     location: "Location", add_transaction: "Add Transaction", sell_btn: "Sell (Income)", buy_btn: "Buy (Expense)",
     date: "Date", weight_kg: "Weight (KG)", weight_g: "Weight (Grams)", cost: "Price (Taka)", add_income: "Add Income",
     add_expense: "Add Expense", daily_overview: "Daily Overview", empty: "No transactions yet", profile_title: "Profile",
@@ -219,6 +219,23 @@ const Dashboard = () => {
 
   useEffect(() => { localStorage.setItem("app_lang", lang); }, [lang]);
 
+  // Inject Leaflet CSS & JS dynamically if not present
+  useEffect(() => {
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link');
+      link.id = 'leaflet-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+    if (!document.getElementById('leaflet-js')) {
+      const script = document.createElement('script');
+      script.id = 'leaflet-js';
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      document.head.appendChild(script);
+    }
+  }, []);
+
   // Weather Fetch
   useEffect(() => {
     const fetchWeather = async () => {
@@ -256,66 +273,79 @@ const Dashboard = () => {
 
   // Map Initialization Effect
   useEffect(() => {
-    if (view === "risk_map" && mapContainerRef.current && (window as any).L) {
-      const L = (window as any).L;
-      const center = DIVISION_DATA[selectedDivision] || DIVISION_DATA["Dhaka"];
-      
-      // Cleanup previous map instance if it exists to allow re-render with new center
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
+    if (view === "risk_map" && mapContainerRef.current) {
+      // Check if Leaflet is loaded
+      const checkLeaflet = setInterval(() => {
+        if ((window as any).L) {
+          clearInterval(checkLeaflet);
+          
+          const L = (window as any).L;
+          const center = DIVISION_DATA[selectedDivision] || DIVISION_DATA["Dhaka"];
+          
+          // Cleanup previous map instance if it exists to allow re-render with new center
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.remove();
+            mapInstanceRef.current = null;
+          }
 
-      const map = L.map(mapContainerRef.current).setView([center.lat, center.lng], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(map);
+          const map = L.map(mapContainerRef.current).setView([center.lat, center.lng], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+          }).addTo(map);
 
-      // Custom Icons
-      const getIcon = (color: string) => L.divIcon({
-        className: 'custom-div-icon',
-        html: `<div class="w-4 h-4 rounded-full border-2 border-white shadow-md ${color}"></div>`,
-        iconSize: [16, 16],
-        iconAnchor: [8, 8]
-      });
+          // Custom Icons
+          const getIcon = (color: string) => L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: ${color}; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+          });
 
-      // Farmer Marker (Blue)
-      L.marker([center.lat, center.lng], {
-        icon: getIcon('bg-blue-600')
-      }).addTo(map).bindPopup(`<div class="font-['Hind_Siliguri'] font-bold text-blue-700">আপনার অবস্থান</div>`);
+          // Farmer Marker (Blue)
+          L.marker([center.lat, center.lng], {
+            icon: getIcon('#2563EB') // Blue
+          }).addTo(map).bindPopup(`<div style="font-family: 'Hind Siliguri', sans-serif; color: #1e40af; font-weight: bold;">আপনার অবস্থান</div>`);
 
-      // Mock Neighbors
-      for (let i = 0; i < 15; i++) {
-        const latOffset = (Math.random() - 0.5) * 0.06;
-        const lngOffset = (Math.random() - 0.5) * 0.06;
-        const risk = Math.random() > 0.6 ? 'High' : (Math.random() > 0.3 ? 'Medium' : 'Low');
-        const color = risk === 'High' ? 'bg-red-600' : (risk === 'Medium' ? 'bg-yellow-500' : 'bg-green-600');
-        const crop = CROPS[Math.floor(Math.random() * CROPS.length)].split(' (')[0]; 
-        
-        // Localized Risk Label
-        const riskLabel = risk === 'High' ? t.risk_high : (risk === 'Medium' ? t.risk_medium : t.risk_low);
-        const timeAgo = toBanglaDigits(Math.floor(Math.random() * 59) + 1);
+          // Mock Neighbors
+          for (let i = 0; i < 15; i++) {
+            const latOffset = (Math.random() - 0.5) * 0.06;
+            const lngOffset = (Math.random() - 0.5) * 0.06;
+            const risk = Math.random() > 0.6 ? 'High' : (Math.random() > 0.3 ? 'Medium' : 'Low');
+            // Colors: High=Red, Medium=Yellow, Low=Green
+            const color = risk === 'High' ? '#DC2626' : (risk === 'Medium' ? '#EAB308' : '#16A34A');
+            const crop = CROPS[Math.floor(Math.random() * CROPS.length)].split(' (')[0]; 
+            
+            // Localized Risk Label
+            const riskLabel = risk === 'High' ? t.risk_high : (risk === 'Medium' ? t.risk_medium : t.risk_low);
+            const timeAgo = toBanglaDigits(Math.floor(Math.random() * 59) + 1);
 
-        const popupContent = `
-          <div class="font-['Hind_Siliguri'] p-1 min-w-[150px]">
-            <p class="text-xs text-gray-500 font-bold mb-1">${t.crop_type}: <span class="text-gray-800">${crop}</span></p>
-            <p class="text-sm font-bold mb-1">${t.risk_level}: <span class="${risk === 'High' ? 'text-red-600' : (risk === 'Medium' ? 'text-yellow-600' : 'text-green-600')}">${riskLabel}</span></p>
-            <p class="text-[10px] text-gray-400 text-right">${t.last_update}: ${timeAgo} মিনিট আগে</p>
-          </div>
-        `;
+            const popupContent = `
+              <div style="font-family: 'Hind Siliguri', sans-serif; min-width: 140px;">
+                <p style="font-size: 12px; color: #6b7280; font-weight: bold; margin-bottom: 4px;">${t.crop_type}: <span style="color: #1f2937;">${crop}</span></p>
+                <p style="font-size: 14px; font-weight: bold; margin-bottom: 4px;">
+                  ${t.risk_level}: 
+                  <span style="color: ${color};">${riskLabel}</span>
+                </p>
+                <p style="font-size: 10px; color: #9ca3af; text-align: right; margin: 0;">${t.last_update}: ${timeAgo} মিনিট আগে</p>
+              </div>
+            `;
 
-        L.marker([center.lat + latOffset, center.lng + lngOffset], {
-          icon: getIcon(color)
-        }).addTo(map).bindPopup(popupContent);
-      }
+            L.marker([center.lat + latOffset, center.lng + lngOffset], {
+              icon: getIcon(color)
+            }).addTo(map).bindPopup(popupContent);
+          }
 
-      mapInstanceRef.current = map;
-      setMapInitialized(true);
+          mapInstanceRef.current = map;
+          setMapInitialized(true);
 
-      // Fix for gray map area: force resize calculation
-      setTimeout(() => {
-        map.invalidateSize();
+          // Fix for gray map area: force resize calculation
+          setTimeout(() => {
+            map.invalidateSize();
+          }, 100);
+        }
       }, 100);
+
+      return () => clearInterval(checkLeaflet);
     }
     
     return () => {
@@ -502,12 +532,16 @@ const Dashboard = () => {
           .leaflet-container {
             z-index: 0;
           }
+          .custom-div-icon {
+            background: transparent;
+            border: none;
+          }
         `}</style>
         
         <div className="bg-[#2F5233] p-4 text-white flex items-center gap-3 sticky top-0 z-50 shadow-md">
           <button onClick={() => setView("dashboard")} className="p-1 hover:bg-white/20 rounded-full transition"><ArrowLeft /></button>
           <div className="flex-1">
-            <h2 className="font-bold text-lg flex items-center gap-2"><Map size={20} /> {t.risk_map_title}</h2>
+            <h2 className="font-bold text-lg flex items-center gap-2"><MapIcon size={20} /> {t.risk_map_title}</h2>
             <p className="text-xs text-green-100 opacity-90">{t.risk_map_desc}</p>
           </div>
           <div className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
@@ -581,7 +615,7 @@ const Dashboard = () => {
         </div>
       </header>
       
-      {/* Menu Options - Marked Area for New Feature */}
+      {/* Menu Options */}
       {showMenu && (
         <div className="absolute top-20 left-4 z-50 bg-white shadow-xl rounded-xl border border-gray-100 p-2 w-64 animate-in slide-in-from-top-2">
           <button onClick={() => {setShowMenu(false); setView("scanner")}} className="flex gap-3 w-full p-3 hover:bg-green-50 rounded-lg font-bold text-gray-700">
@@ -590,19 +624,37 @@ const Dashboard = () => {
           <button onClick={() => {setShowMenu(false); setView("chat")}} className="flex gap-3 w-full p-3 hover:bg-blue-50 rounded-lg font-bold text-gray-700">
             <MessageCircle size={18}/> {t.chat_title}
           </button>
-          {/* New Local Risk Map Option */}
+          {/* ADDED: Red marked Local Risk Map option */}
           <button onClick={() => {setShowMenu(false); setView("risk_map")}} className="flex gap-3 w-full p-3 hover:bg-orange-50 rounded-lg font-bold text-gray-700">
-            <Map size={18} className="text-orange-600"/> {t.risk_map_title}
+            <MapIcon size={18} className="text-orange-600"/> {t.risk_map_title}
           </button>
         </div>
       )}
 
       <div className="p-4 space-y-6 max-w-md mx-auto">
-        {/* Profit Card */}
+        {/* ADDED: Brown rectangular marked area (Income/Expenses) */}
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className={`rounded-2xl p-6 text-white shadow-lg relative overflow-hidden bg-gradient-to-r ${isProfit ? "from-[#E9D66B] to-[#F4A261]" : "from-red-500 to-red-700"}`}>
           <div className="absolute right-[-20px] top-[-20px] opacity-20"><Wallet size={100} /></div>
+          
+          {/* Main Profit Display */}
           <p className="text-white/90 font-bold mb-1">{isProfit ? t.net_profit : t.net_loss}</p>
-          <h2 className="text-4xl font-bold flex items-center gap-2">{isProfit ? "+" : ""} ৳ {formatCurrency(netProfit, lang)}</h2>
+          <h2 className="text-4xl font-bold flex items-center gap-2 mb-4">{isProfit ? "+" : ""} ৳ {formatCurrency(netProfit, lang)}</h2>
+
+          {/* ADDED: Income & Expense Breakdown */}
+          <div className="flex gap-4 border-t border-white/20 pt-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-1 text-white/80 text-xs font-bold mb-1">
+                <TrendingUp size={14} /> {t.income}
+              </div>
+              <p className="text-lg font-bold">৳ {formatCurrency(totalIncome, lang)}</p>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-1 text-white/80 text-xs font-bold mb-1">
+                <TrendingDown size={14} /> {t.expense}
+              </div>
+              <p className="text-lg font-bold">৳ {formatCurrency(totalExpense, lang)}</p>
+            </div>
+          </div>
         </motion.div>
 
         {/* WEATHER & SMART ALERT SECTION */}
